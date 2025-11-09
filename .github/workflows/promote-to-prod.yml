@@ -52,7 +52,7 @@ jobs:
           fi
 
       # 5) Create a PR in the PROD repo with these changes
-            - name: Create Pull Request in PROD
+      - name: Create Pull Request in PROD
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PROD_REPO_PAT }}
