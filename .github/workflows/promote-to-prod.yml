@@ -53,10 +53,10 @@ jobs:
 
       # 5) Create a PR in the PROD repo with these changes
       - name: Create Pull Request in PROD
+        working-directory: prod-repo
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PROD_REPO_PAT }}
-          path: prod-repo            # <- operate inside the PROD repo we checked out
           commit-message: "Promote DEV to PROD: ${{ github.repository }}@${{ github.sha }}"
           title: ${{ github.event.inputs.pr_title }}
           body: |
@@ -67,3 +67,4 @@ jobs:
           labels: |
             promotion
             automated
+
