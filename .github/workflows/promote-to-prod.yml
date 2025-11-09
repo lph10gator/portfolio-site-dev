@@ -51,20 +51,40 @@ jobs:
             mv CNAME.backup prod-repo/CNAME
           fi
 
-      # 5) Create a PR in the PROD repo with these changes
-      - name: Create Pull Request in PROD
-        working-directory: prod-repo
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.PROD_REPO_PAT }}
-          commit-message: "Promote DEV to PROD: ${{ github.repository }}@${{ github.sha }}"
-          title: ${{ github.event.inputs.pr_title }}
-          body: |
-            Automated promotion from DEV (`portfolio-site-dev`).
-            Excludes DEV-only files: robots.txt and CNAME.
-          branch: promote/dev-${{ github.run_number }}
-          base: main
-          labels: |
-            promotion
-            automated
+      # 5) Commit and push a branch to the PROD repo
+      - name: Commit & push branch to PROD
+        id: push_to_prod
+        run: |
+          set -e
+          cd prod-repo
+          git config user.name "lph10gator"
+          git config user.email "156947819+lph10gator@users.noreply.github.com"
+          # New branch name for this run
+          BRANCH="promote/dev-${{ github.run_number }}"
+          git checkout -B "$BRANCH"
 
+          # Stage changes (there should be some after the sync step)
+          if git status --porcelain | grep .; then
+            git add -A
+            git commit -m "Promote DEV to PROD: $GITHUB_REPOSITORY@$GITHUB_SHA"
+            # Push using the PAT
+            git push -f "https://${{ secrets.PROD_REPO_PAT }}@github.com/lph10gator/portfolio-site.git" HEAD:"$BRANCH"
+            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "No changes to promote."
+            echo "branch=" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 6) Open a Pull Request in PROD via GitHub API
+      - name: Open PR in PROD
+        if: steps.push_to_prod.outputs.branch != ''
+        run: |
+          BRANCH="${{ steps.push_to_prod.outputs.branch }}"
+          TITLE="${{ github.event.inputs.pr_title }}"
+          BODY=$'Automated promotion from DEV (`portfolio-site-dev`).\nExcludes DEV-only files: robots.txt and CNAME.'
+          curl -sS -X POST \
+            -H "Authorization: token ${{ secrets.PROD_REPO_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/lph10gator/portfolio-site/pulls \
+            -d "$(jq -n --arg t "$TITLE" --arg h "$BRANCH" --arg b "main" --arg body "$BODY" \
+                  '{title:$t, head:$h, base:$b, body:$body}')"
