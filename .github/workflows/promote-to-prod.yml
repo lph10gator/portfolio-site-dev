@@ -56,8 +56,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PROD_REPO_PAT }}
-          repository: lph10gator/portfolio-site
-          path: prod-repo
+          path: prod-repo            # <- operate inside the PROD repo we checked out
           commit-message: "Promote DEV to PROD: ${{ github.repository }}@${{ github.sha }}"
           title: ${{ github.event.inputs.pr_title }}
           body: |
@@ -68,4 +67,3 @@ jobs:
           labels: |
             promotion
             automated
-
