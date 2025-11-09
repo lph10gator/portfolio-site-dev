@@ -24,6 +24,9 @@ jobs:
           shopt -s extglob dotglob
           for item in * .*; do
             [[ "$item" == "." || "$item" == ".." ]] && continue
+            [[ "$item" == "_promote" ]] && continue
+            [[ "$item" == ".git" ]] && continue
+            [[ "$item" == ".github" ]] && continue
             [[ "$item" == "robots.txt" ]] && continue
             [[ "$item" == "CNAME" ]] && continue
             cp -R "$item" _promote/ 2>/dev/null || true
@@ -57,18 +60,23 @@ jobs:
         run: |
           set -e
           cd prod-repo
+
+          # Configure author
           git config user.name "lph10gator"
           git config user.email "156947819+lph10gator@users.noreply.github.com"
-          # New branch name for this run
+
+          # Make sure the remote uses your PAT (not github-actions[bot])
+          git remote set-url origin "https://x-access-token:${{ secrets.PROD_REPO_PAT }}@github.com/lph10gator/portfolio-site.git"
+
+          # New branch for this run
           BRANCH="promote/dev-${{ github.run_number }}"
           git checkout -B "$BRANCH"
 
-          # Stage changes (there should be some after the sync step)
+          # Stage & commit if there are changes
           if git status --porcelain | grep .; then
             git add -A
             git commit -m "Promote DEV to PROD: $GITHUB_REPOSITORY@$GITHUB_SHA"
-            # Push using the PAT
-            git push -f "https://${{ secrets.PROD_REPO_PAT }}@github.com/lph10gator/portfolio-site.git" HEAD:"$BRANCH"
+            git push -f origin "$BRANCH:$BRANCH"
             echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           else
             echo "No changes to promote."
