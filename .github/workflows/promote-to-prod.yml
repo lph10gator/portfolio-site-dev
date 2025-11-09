@@ -1,0 +1,69 @@
+name: Promote to PROD
+on:
+  workflow_dispatch:
+    inputs:
+      pr_title:
+        description: 'Pull request title for the promotion'
+        required: true
+        default: 'Promote DEV to PROD'
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Checkout DEV repo (this repo)
+      - name: Checkout DEV repo
+        uses: actions/checkout@v4
+
+      # 2) Prepare a clean artifact of the DEV site
+      #    Exclude robots.txt (DEV-only) and CNAME (uses DEV subdomain)
+      - name: Build promotion artifact
+        run: |
+          rm -rf _promote && mkdir _promote
+          shopt -s extglob dotglob
+          for item in * .*; do
+            [[ "$item" == "." || "$item" == ".." ]] && continue
+            [[ "$item" == "robots.txt" ]] && continue
+            [[ "$item" == "CNAME" ]] && continue
+            cp -R "$item" _promote/ 2>/dev/null || true
+          done
+
+      # 3) Checkout the PROD repo side-by-side
+      - name: Checkout PROD repo
+        uses: actions/checkout@v4
+        with:
+          repository: lph10gator/portfolio-site
+          token: ${{ secrets.PROD_REPO_PAT }}
+          path: prod-repo
+          fetch-depth: 0
+
+      # 4) Replace PROD contents with the artifact (keep PROD's CNAME if present)
+      - name: Sync into PROD working tree
+        run: |
+          shopt -s dotglob
+          if [ -f prod-repo/CNAME ]; then
+            cp prod-repo/CNAME CNAME.backup
+          fi
+          find prod-repo -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+          cp -R _promote/* prod-repo/ || true
+          if [ -f CNAME.backup ]; then
+            mv CNAME.backup prod-repo/CNAME
+          fi
+
+      # 5) Create a PR in the PROD repo with these changes
+      - name: Create Pull Request in PROD
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PROD_REPO_PAT }}
+          path: prod-repo
+          commit-message: "Promote DEV to PROD: ${{ github.repository }}@${{ github.sha }}"
+          title: ${{ github.event.inputs.pr_title }}
+          body: |
+            Automated promotion from DEV (`portfolio-site-dev`).
+            Excludes DEV-only files: robots.txt and CNAME.
+          branch: promote/dev-${{ github.run_number }}
+          base: main
+          labels: |
+            promotion
+            automated
