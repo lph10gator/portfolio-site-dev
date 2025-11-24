@@ -16,7 +16,7 @@ I needed to monitor industry podcasts, automatically download new episodes, tran
 A 5-node n8n workflow:
 
 ```
-RSS Read → Limit → HTTP Download → OpenAI Whisper → Gmail
+![n8n workflow](/images/![n8n workflow](/images/n8n-workflow.png))
 ```
 
 **How it works:**
