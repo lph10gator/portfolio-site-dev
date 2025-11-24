@@ -19,7 +19,7 @@ exclude:
 collections:
   posts:
     output: true
-    permalink: /notes/:year/:month/:title/
+    permalink: /build-log/:year/:month/:title/
 
 # Default front matter
 defaults:
