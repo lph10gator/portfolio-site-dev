@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Building an AI-Powered Podcast Transcription Pipeline"
-date: 2024-11-24
+date: 2025-11-24
 tags: [n8n, OpenAI, Whisper, automation]
 ---
 
