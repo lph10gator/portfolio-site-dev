@@ -1,56 +1,89 @@
----
-layout: post
-title: "Building an AI-Powered Podcast Transcription Pipeline"
-date: 2025-11-24
-tags: [n8n, OpenAI, Whisper, automation]
----
-
-Today I built my first end-to-end automation workflow using n8n - a visual workflow automation tool that lets you connect APIs and services without writing integration code.
-
-## The Problem
-
-I needed to monitor industry podcasts, automatically download new episodes, transcribe them, and deliver the text for analysis. Doing this manually would take hours per episode.
-
-## The Solution
-
-A 5-node n8n workflow:
-
-```
-RSS Read → Limit → HTTP Download → OpenAI Whisper → Gmail
-```
-
-**How it works:**
-
-1. **RSS Read** monitors the podcast feed for new episodes
-2. **Limit** ensures we only process one episode at a time (cost control)
-3. **HTTP Download** grabs the MP3 file
-4. **OpenAI Whisper** transcribes audio to text ($0.006/minute)
-5. **Gmail** sends me the transcript with episode title and date
-
-## What I Learned
-
-**File size matters.** OpenAI's Whisper API has a 25MB upload limit. Some podcasts use high-bitrate audio (48MB+ per episode), which requires either compression or local processing.
-
-**Start with proven APIs.** I could run Whisper locally (free, no limits), but for a proof-of-concept, the cloud API is faster to validate the concept. Optimize later.
-
-**Safety controls are essential.** Runaway automation loops can rack up unexpected charges. Built-in limits (max episodes per day, cost thresholds) prevent surprises.
-
-## Cost Analysis
-
-| Item | Cost |
-|------|------|
-| 30-minute episode | ~$0.18 |
-| Weekly monitoring (2 podcasts) | ~$0.72 |
-| Monthly total | ~$3.00 |
-
-For competitive intelligence value, that's negligible.
-
-## Next Steps
-
-- Add Claude API integration for automated analysis and summarization
-- Build weekly digest email with key insights
-- Evaluate local Whisper for larger files (now that I have 32GB RAM)
-
----
-
-*This is part of my transition from 15 years of government data engineering into AI automation and startup engineering. More notes to come.*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} | Linton McCracken</title>
+  <link rel="stylesheet" href="/assets_style.css">
+  <style>
+    .post-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .post-header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 1rem;
+    }
+    .post-title {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .post-meta {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .post-tags {
+      margin-top: 0.5rem;
+    }
+    .post-tags span {
+      background: #f0f0f0;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .post-content {
+      line-height: 1.8;
+    }
+    .post-content h2 {
+      margin-top: 2rem;
+    }
+    .post-content pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .post-content code {
+      font-family: 'Fira Code', monospace;
+    }
+    .back-link {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+    }
+    .back-link a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="post-container">
+    <header class="post-header">
+      <h1 class="post-title">{{ page.title }}</h1>
+      <div class="post-meta">
+        <time>{{ page.date | date: "%B %d, %Y" }}</time>
+        {% if page.tags %}
+        <div class="post-tags">
+          {% for tag in page.tags %}
+          <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </header>
+    
+    <article class="post-content">
+      {{ content }}
+    </article>
+    
+    <div class="back-link">
+      <a href="/build-log/">← Back to Build Log</a> | <a href="/">← Home</a>
+    </div>
+  </div>
+</body>
+</html>
