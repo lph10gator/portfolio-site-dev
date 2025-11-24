@@ -15,9 +15,7 @@ I needed to monitor industry podcasts, automatically download new episodes, tran
 
 A 5-node n8n workflow:
 
-```
 ![n8n workflow](/images/n8n-rss-transcription-workflow.png))
-```
 
 **How it works:**
 
